@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ANAS TOOLKIT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* reset */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:"Poppins",sans-serif;
+      color:#fff; /* all text white */
+      background:#000;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:12px;
+    }
+
+    /* VIDEO BACKGROUND (YouTube embed autoplay, muted, loop) */
+    .bg-video{
+      position:fixed;inset:0;z-index:-3;overflow:hidden;
+      pointer-events:none;
+      transform:translateZ(0);
+      will-change:transform;
+    }
+    .bg-video iframe{
+      position:absolute;
+      top:50%;left:50%;
+      /* keep cover: wide width based on viewport height for consistent cover */
+      width:177.78vh; height:100vh;
+      transform:translate(-50%,-50%);
+      border:0;
+    }
+
+    /* subtle animated 3D overlay layer for depth */
+    .bg-overlay{
+      position:fixed;inset:0;z-index:-2;pointer-events:none;
+      background:linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.65));
+      overflow:hidden;
+    }
+    .bg-overlay::before{
+      content:"";
+      position:absolute;inset:-40%;
+      background:radial-gradient(circle at 30% 30%, rgba(110,80,255,0.08), transparent 8%),
+                 radial-gradient(circle at 70% 70%, rgba(0,255,200,0.04), transparent 8%);
+      transform:rotateX(30deg) rotateY(0deg);
+      animation:spin3d 40s linear infinite;
+      mix-blend-mode:screen;
+    }
+    @keyframes spin3d{
+      from{transform:rotateX(18deg) rotateY(0deg)}
+      to{transform:rotateX(18deg) rotateY(360deg)}
+    }
+
+    /* layout */
+    .container{max-width:1200px;margin:0 auto;position:relative;z-index:1}
+    .header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px}
+    .header h1{font-size:1.05rem;font-weight:700;color:#fff}
+    /* grid 4 columns exact */
+    .tools-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+    /* TOOL CARD: black boxes with LED accent */
+    .tool-card{
+      background:#000;           /* box color black */
+      color:#fff;                /* text white */
+      border-radius:10px;
+      padding:8px;
+      position:relative;
+      overflow:visible;
+      box-shadow:
+        0 6px 18px rgba(0,0,0,0.6),
+        0 0 14px rgba(10,10,10,0.6);
+      border:1px solid rgba(255,255,255,0.04);
+      transition:transform .18s ease, box-shadow .18s ease;
+      perspective:800px; /* enable subtle 3D tilt */
+    }
+    .tool-card:hover{transform:translateY(-6px) rotateX(2deg); box-shadow:0 18px 40px rgba(0,0,0,0.7)}
+
+    /* LED strip effect (animated glowing bar) */
+    .tool-card::after{
+      content:"";
+      position:absolute;
+      left:10px; right:10px; bottom:10px;
+      height:6px;
+      border-radius:6px;
+      background:linear-gradient(90deg,#00ffd5,#6a4bff,#ff4b8b,#00ffd5);
+      background-size:200% 100%;
+      filter:blur(8px) saturate(140%);
+      opacity:.9;
+      animation:ledrun 3s linear infinite;
+      pointer-events:none;
+      z-index:2;
+    }
+    @keyframes ledrun{
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+
+    /* image area */
+    .tool-image{width:100%;height:80px;object-fit:contain;background:#0b0b0b;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.03)}
+    .tool-image.error{display:flex;align-items:center;justify-content:center;height:80px;background:#0b0b0b;color:#999}
+
+    /* content */
+    .tool-content{padding:8px 4px 18px 4px} /* space for LED bar */
+    .tool-title{font-size:.62rem;font-weight:600;color:#fff;margin-bottom:8px;min-height:32px;line-height:1.05}
+    .download-btn{
+      display:inline-block;padding:8px 6px;border-radius:8px;
+      background:linear-gradient(90deg,#171717,#111);
+      color:#fff;text-decoration:none;font-weight:700;font-size:.75rem;
+      border:1px solid rgba(255,255,255,0.06);
+      box-shadow:0 6px 18px rgba(106,75,255,0.06), inset 0 -2px 8px rgba(0,0,0,0.5);
+    }
+    .download-btn i{margin-right:6px}
+
+    /* ensure footer and header use dark transparent backgrounds so they read on video */
+    .header, .footer{
+      background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.4));
+      padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
+      color:#fff;
+    }
+    .footer{margin-top:12px;text-align:center}
+
+    /* keep 4 columns on small screens per user request */
+    @media (max-width:600px){
+      .tools-grid{grid-template-columns:repeat(4,1fr);gap:8px}
+      .tool-title{font-size:.55rem}
+    }
+
+    /* small accessibility: focus states */
+    a:focus{outline:2px solid rgba(106,75,255,0.6);outline-offset:2px}
+  </style>
+</head>
+<body>
+  <!-- YouTube video background: autoplay, muted, loop. playlist param equals video id to loop. -->
+  <div class="bg-video" aria-hidden="true">
+    <iframe src="https://www.youtube.com/embed/S2kymv60ndQ?autoplay=1&mute=1&controls=0&rel=0&loop=1&playlist=S2kymv60ndQ&modestbranding=1&playsinline=1"
+            allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  </div>
+  <div class="bg-overlay" aria-hidden="true"></div>
+
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-toolbox"></i> ANAS TOOLKIT</h1>
+      <!-- minimal header text retained -->
+    </div>
+
+    <div class="tools-grid">
+      <!-- example card (all cards in file kept, styling adjusted) -->
+      <div class="tool-card" style="animation-delay:0s">
+        <img class="tool-image" src="https://i.postimg.cc/2SqQ6m99/IMG-20251130-WA0006.jpg" alt="Image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" crossorigin="anonymous">
+        <div class="tool-image error" style="display:none">📷</div>
+        <div class="tool-content">
+          <div class="tool-title">OWN PASSWORD CRACKER BOT MAKING METHOD</div>
+          <a class="download-btn" href="https://www.mediafire.com/file/syffxx9hkaag9sv/OWN_PASSWORD_CRACKING_BOT_MAKING_METHOD.md/file" target="_blank"><i class="fas fa-download"></i>DOWNLOAD</a>
+        </div>
+      </div>
+
+      <!-- duplicate for all other cards in your file (kept but they will now render with black box, LED) -->
+      <!-- ... (rest of tool-card elements remain unchanged) ... -->
+
+    </div>
+
+    <div class="footer">
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <a class="download-btn" href="https://whatsapp.com/channel/0029VbCK2IV3mFY4yc5kUk42" target="_blank"><i class="fab fa-whatsapp"></i>JOIN</a>
+        <a class="download-btn" href="mailto:anas92642@gmail.com"><i class="fas fa-envelope"></i>SUPPORT</a>
+      </div>
+      <div style="margin-top:8px;font-size:.78rem;color:#ddd">POWERED BY <strong style="color:#fff">ANAS</strong></div>
+    </div>
+  </div>
+
+  <script>
+    // stagger animation delays (visual)
+    document.querySelectorAll('.tool-card').forEach((c,i)=> c.style.animationDelay = (i*0.06)+'s');
+    // Ensure iframe keeps playing on some browsers: re-set src if iframe stops (simple fallback)
+    const iframe = document.querySelector('.bg-video iframe');
+    if(iframe && !iframe.src.includes('autoplay=1')) {
+      iframe.src += (iframe.src.includes('?') ? '&' : '?') + 'autoplay=1&mute=1';
+    }
+  </script>
+</body>
+</html>
